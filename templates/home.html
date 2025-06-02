@@ -1,0 +1,15 @@
+{% extends "app.html" %}
+{% load static %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+    <h1 class="text-h1">Panel Administrador</h1>
+    {% include "dashboard_stats.html" %}
+    {% include "grafico_barras.html" %}
+    {% include "actividad_reciente.html" %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{% endblock %}

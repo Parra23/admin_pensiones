@@ -1,0 +1,58 @@
+<div class="dashboard-stats-title" style="width:100%; text-align:center;">
+    <h2 style="margin: 0 auto;">Estadísticas Generales</h2>
+</div>
+<div class="dashboard-stats-flex">
+    <div class="stat-card stat-card-fixed">
+        <table>
+            <tbody>
+                <tr><td><i class="fas fa-users icon-rojo"></i> Usuarios</td><td id="usuarios-count">-</td></tr>
+                <tr><td><i class="fas fa-user-shield icon-beige"></i> Administradores</td><td id="administradores-count">-</td></tr>
+                <tr><td><i class="fas fa-user-check icon-rojo-oscuro"></i> Usuarios Activos</td><td id="usuarios-activos-count">-</td></tr>
+                <tr><td><i class="fas fa-user-times icon-rojo-oscuro"></i> Usuarios Inactivos</td><td id="usuarios-inactivos-count">-</td></tr>
+                <tr><td><i class="fas fa-city icon-beige"></i> Ciudades</td><td id="ciudades-count">-</td></tr>
+                <tr><td><i class="fas fa-star icon-rojo"></i> Reseñas</td><td id="resenas-count">-</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="stat-card stat-card-fixed">
+        <table>
+            <tbody>
+                <tr><td><i class="fas fa-bed icon-rojo-oscuro"></i> Habitaciones</td><td id="habitaciones-count">-</td></tr>
+                <tr><td><i class="fas fa-bed icon-rojo-oscuro"></i> Habitaciones Ocupadas</td><td id="habitaciones-ocupadas-count">-</td></tr>
+                <tr><td><i class="fas fa-building icon-rojo"></i> Pensiones</td><td id="pensiones-count">-</td></tr>
+                <tr><td><i class="fas fa-building icon-beige"></i> Pensiones Activas</td><td id="pensiones-activas-count">-</td></tr>
+                <tr><td><i class="fas fa-building icon-beige"></i> Pensiones Inactivas</td><td id="pensiones-inactivas-count">-</td></tr>
+                <tr><td><i class="fas fa-calendar-check icon-rojo"></i> Reservas</td><td id="reservas-count">-</td></tr>
+                <tr><td><i class="fas fa-concierge-bell icon-beige"></i> Servicios</td><td id="servicios-count">-</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('https://myapi-pensiones.onrender.com/api/v_total_datos')
+        .then(resp => {
+          if (!resp.ok) throw new Error('Network response was not ok');
+          return resp.json();
+        })
+        .then(data => {
+          const valores = data[0];
+          document.getElementById('usuarios-count').textContent = valores.total_usuarios ?? '-';
+          document.getElementById('administradores-count').textContent = valores.total_administradores ?? '-';
+          document.getElementById('usuarios-activos-count').textContent = valores.total_usuarios_activos ?? '-';
+          document.getElementById('usuarios-inactivos-count').textContent = valores.total_usuarios_inactivos ?? '-';
+          document.getElementById('ciudades-count').textContent = valores.total_ciudades ?? '-';
+          document.getElementById('habitaciones-count').textContent = valores.total_habitaciones ?? '-';
+          document.getElementById('habitaciones-ocupadas-count').textContent = valores.total_habitaciones_ocupadas ?? '-';
+          document.getElementById('pensiones-count').textContent = valores.total_pensiones ?? '-';
+          document.getElementById('pensiones-activas-count').textContent = valores.total_pensiones_activas ?? '-';
+          document.getElementById('pensiones-inactivas-count').textContent = valores.total_pensiones_inactivas ?? '-';
+          document.getElementById('resenas-count').textContent = valores.total_resenas ?? '-';
+          document.getElementById('reservas-count').textContent = valores.total_reservas ?? '-';
+          document.getElementById('servicios-count').textContent = valores.total_servicios ?? '-';
+        })
+        .catch(error => {
+          console.error('Error al obtener datos del dashboard:', error);
+        });
+    });
+</script>

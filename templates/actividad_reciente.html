@@ -1,0 +1,27 @@
+<div class="recent-activity">
+    <h3>Actividad Reciente</h3>
+    <table class="activity-table">
+        <thead>
+            <tr id="actividad-thead">
+                <!-- Los encabezados se llenarán con JS -->
+            </tr>
+        </thead>
+        <tbody id="actividad-tbody">
+            <!-- Las filas se llenarán con JS -->
+        </tbody>
+    </table>
+    <div id="pagination" class="pagination"></div>
+</div>
+<script>
+    fetch('https://myapi-pensiones.onrender.com/api/auditoria_general')
+        .then(response => response.json())
+        .then(data => {
+            renderTableWithPagination({
+                data: Array.isArray(data) ? data : [],
+                theadId: 'actividad-thead',
+                tbodyId: 'actividad-tbody',
+                paginationId: 'pagination',
+                pageSize: 10
+            });
+        });
+</script>

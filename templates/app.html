@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel de Administración - Alquiler de Pensiones{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% include "sidebar.html" %}
+    <div class="main-content">
+        <div class="user-info">
+            <div class="dropdown">
+                <button class="user-dropdown-btn">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="user-name">{{ nombre }}</span>
+                    <i class="fas fa-caret-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/modal_form.js' %}"></script>
+    {% block extra_js %}
+    <script>
+        // Dropdown simple para mostrar/ocultar el menú
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.querySelector('.user-dropdown-btn');
+            const dropdown = document.querySelector('.dropdown-content');
+            if(btn && dropdown) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                });
+                document.addEventListener('click', function() {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+        </script>
+    {% endblock %}
+</body>
+</html>

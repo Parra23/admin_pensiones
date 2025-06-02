@@ -1,0 +1,370 @@
+{% extends "app.html" %}
+{% load static %}
+
+{% block title %}Tabla General Modelo{% endblock %}
+
+{% block extra_head %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:1500px; margin:2em auto; padding:2.5em 2em;">
+    <h2 style="font-size:2.2em; color:#A32232; font-weight:900; text-align:center; margin-bottom:1.5em; letter-spacing:1px;">
+        <i class="fas fa-table"></i> Gestión de Tablas Generales
+    </h2>
+    <div class="select-wrapper" style="margin-bottom:1.5em;">
+        <label for="tabla-select" style="font-size:1em; font-weight:600; color:#8F1B28;">
+            Selecciona una tabla:
+        </label>
+        <select id="tabla-select" size="1"></select>
+        <button id="insertar-btn"><i class="fas fa-plus"></i> Insertar</button>
+    </div>
+    <div class="table-responsive" style="width:100%; overflow-x:auto;">
+        <table class="activity-table" style="width:100%;">
+            <thead>
+                <tr id="modelo-thead"></tr>
+            </thead>
+            <tbody id="modelo-tbody"></tbody>
+        </table>
+    </div>
+    <div id="modelo-pagination" class="pagination"></div>
+</div>
+
+<!-- Modal para Insertar/Editar -->
+<div id="modal-form" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0008; z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2em; min-width:320px; max-width:90vw; position:relative;">
+        <button id="cerrar-modal" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:1.5em; color:#A32232; cursor:pointer;">&times;</button>
+        <h3 id="modal-title" style="color:#A32232; margin-bottom:1em;">Formulario</h3>
+        <form id="modal-form-content">
+            <!-- Aquí se generarán los campos dinámicamente -->
+        </form>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div id="modal-confirm" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0008; z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2em 2em 1.5em 2em; min-width:300px; max-width:90vw; text-align:center; position:relative;">
+        <h4 style="color:#A32232; margin-bottom:1em;">¿Seguro que deseas eliminar este registro?</h4>
+        <div style="display:flex; gap:1em; justify-content:center;">
+            <button id="confirm-accept" style="background:#A32232;color:#fff;padding:0.7em 2em;border:none;border-radius:7px;font-weight:700;cursor:pointer;">Aceptar</button>
+            <button id="confirm-cancel" style="background:#ccc;color:#333;padding:0.7em 2em;border:none;border-radius:7px;font-weight:700;cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<!-- Choices.js JS -->
+<!-- Incluye tu archivo externo antes del script principal -->
+<script src="{% static 'js/modal_form.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tablas = [
+            {nombre: "Ciudades", endpoint: "v_ciudades"},
+            {nombre: "Departamentos", endpoint: "Departamentos"},
+            {nombre: "Estados pago", endpoint: "estados_pago"},
+            {nombre: "Habitaciones", endpoint: "v_habitaciones"},
+            {nombre: "Imagenes", endpoint: "v_imagenes"},
+            {nombre: "Metodo de pago", endpoint: "metodos_pago"},
+            {nombre: "Pagos", endpoint: "v_pagos"},
+            {nombre: "Pensiones", endpoint: "v_pensiones"},
+            {nombre: "Reservas", endpoint: "v_reservas"},
+            {nombre: "Reseñas", endpoint: "v_resenas"},
+            {nombre: "Servicio de habitaciones", endpoint: "v_habitacion_servicio"},
+            {nombre: "Servicios", endpoint: "servicios"},
+            {nombre: "Servicios de pensiones", endpoint: "v_pension_servicios"},
+            {nombre: "Usuarios", endpoint: "v_usuarios"}
+        ];
+
+        const API_BASE_URL = "https://myapi-pensiones.onrender.com/api";
+        const tablaSelect = document.getElementById('tabla-select');
+        const insertarBtn = document.getElementById('insertar-btn');
+        const modal = document.getElementById('modal-form');
+        const cerrarModal = document.getElementById('cerrar-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalFormContent = document.getElementById('modal-form-content');
+        let currentEndpoint = tablas[0].endpoint;
+
+        // Define qué columnas mostrar por endpoint
+        const columnasVisibles = {
+            v_ciudades: ["id_ciudad", "ciudad", "departamento"],
+            Departamentos: ["id_departamento", "nombre"],
+            estados_pago: ["id_estado_pago", "nombre"],
+            v_habitaciones: [
+                "id_habitacion",
+                "pension",
+                "descripcion",
+                "capacidad",
+                "precio",
+                "estado_habitacion",
+                "servicio"
+            ],
+            v_imagenes: [
+                "id_imagen",
+                "pension",
+                "url",
+                "descripcion",
+                "habitacion"
+            ],
+            metodos_pago: ["id_metodo_pago", "nombre"],
+            v_pagos: [
+                "id_pago",
+                "monto",
+                "fecha_pago",
+                "metodo_pago",
+                "estado_pago"
+            ],
+            v_pensiones: [
+                "id_pension",
+                "nombre",
+                "descripcion",
+                "direccion",
+                "ciudad",
+                "departamento",
+                "precio_mensual",
+                "reglas",
+                "estado_pension",
+                "propietario",
+                "servicio",
+                "fecha_creacion"
+            ],
+            v_reservas: [
+                "id_reserva",
+                "usuario",
+                "pension",
+                "habitacion",
+                "fecha_inicio",
+                "fecha_fin",
+                "estado_reserva",
+                "total",
+                "fecha_creacion"
+            ],
+            v_resenas: [
+                "id_resena",
+                "usuario",
+                "pension",
+                "calificacion",
+                "comentario",
+                "fecha"
+            ],
+            v_habitacion_servicio: [
+                "habitacion",
+                "servicio"
+            ],
+            v_pension_servicios: [
+                "id_pension",
+                "servicio"
+            ],
+            servicios: ["id_servicio", "nombre"],
+            v_usuarios: [
+                "id_usuario",
+                "nombre",
+                "apellido",
+                "email",
+                "telefono",
+                "rol",
+                "estado_usuario",
+                "fecha_registro"
+            ]
+        };
+
+
+        // Llenar el select
+        tablas.forEach(tabla => {
+            const opt = document.createElement('option');
+            opt.value = tabla.endpoint;
+            opt.textContent = tabla.nombre;
+            tablaSelect.appendChild(opt);
+        });
+
+        tablaSelect.onchange = function() {
+            currentEndpoint = this.value;
+            localStorage.setItem('tablaSeleccionada', this.value); // <-- Guarda la selección
+            cargarTablaGeneral();
+        };
+
+        // Abrir modal de insertar usando la función global de modal_form.js
+        insertarBtn.onclick = function() {
+            abrirModal('insertar', null, currentEndpoint, modal, modalTitle, modalFormContent, API_BASE_URL);
+        };
+
+        cerrarModal.onclick = function() {
+            modal.style.display = 'none';
+        };
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        function cargarTablaGeneral() {
+            fetch(`${API_BASE_URL}/${currentEndpoint}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Obtén las columnas visibles para el endpoint actual
+                    const visibles = columnasVisibles[currentEndpoint];
+                    // Renderiza encabezados + columna de acciones
+                    if (Array.isArray(data) && data.length > 0 && visibles) {
+                        let theadHtml = visibles.map(k => `<th>${k.replace(/_/g, ' ').toUpperCase()}</th>`).join('');
+                        theadHtml += '<th>ACCIONES</th>';
+                        document.getElementById('modelo-thead').innerHTML = theadHtml;
+                    } else {
+                        document.getElementById('modelo-thead').innerHTML = '<th>Sin datos</th>';
+                    }
+                    // Renderiza filas con botones de editar/eliminar
+                    renderTableWithPagination({
+                        data: Array.isArray(data) ? data : [],
+                        theadId: 'modelo-thead',
+                        tbodyId: 'modelo-tbody',
+                        paginationId: 'modelo-pagination',
+                        pageSize: 10,
+                        renderRow: function(row) {
+                            if (!visibles) return '';
+                            let tds = visibles.map(k => {
+                                // Traducción genérica para campos de estado
+                                if (k.toLowerCase().includes("estado")) {
+                                    // Puedes personalizar según el endpoint y campo
+                                    if (typeof row[k] === "number") {
+                                        // Por defecto: 1 = Activo/Pagado, 0 = Inactivo/Pendiente
+                                        if (k === "estado_usuario") return `<td>${row[k] === 1 ? "Activo" : "Inactivo"}</td>`;
+                                        // ...en tu renderRow de tabla_modelo.html...
+                                        if (k === "estado_reserva") {
+                                            let estadoTxt = "Pendiente";
+                                            if (row[k] === 2) estadoTxt = "Confirmada";
+                                            else if (row[k] === 3) estadoTxt = "Cancelada";
+                                            return `<td>${estadoTxt}</td>`;
+                                        }                                        if (k === "estado_habitacion") return `<td>${row[k] === 1 ? "Disponible" : "Ocupada"}</td>`;
+                                        if (k === "estado_pago") return `<td>${row[k] === 1 ? "Pagado" : "Pendiente"}</td>`;
+                                        // Para id_estado_pago, solo muestra el valor:
+                                        if (k === "id_estado_pago") return `<td>${row[k]}</td>`;
+                                        // Por defecto para otros estados
+                                        return `<td>${row[k] === 1 ? "Activo" : "Inactivo"}</td>`;
+                                    }
+                                    // Si es string, lo muestra tal cual
+                                    return `<td>${row[k]}</td>`;
+                                }
+                                // Traducción para rol de usuario
+                                if (currentEndpoint === "v_usuarios" && k === "rol") {
+                                    let rolTxt = "Usuario";
+                                    if (row[k] === 1) rolTxt = "Administrador";
+                                    else if (row[k] === 2) rolTxt = "Propietario";
+                                    return `<td>${rolTxt}</td>`;
+                                }
+                                return `<td>${row[k] !== null && row[k] !== undefined ? row[k] : 'N/A'}</td>`;
+                            }).join('');
+                            // Solo muestra el botón editar si NO es v_pension_servicios
+                            tds += `<td>
+                                ${
+                                    (currentEndpoint === "v_pension_servicios" || currentEndpoint === "v_habitacion_servicio")
+                                    ? ''
+                                    : `<button class="accion-btn editar-btn" title="Editar" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fas fa-edit"></i></button>`
+                                }
+                                <button class="accion-btn eliminar-btn" title="Eliminar" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fas fa-trash"></i></button>
+                            </td>`;
+                            return `<tr>${tds}</tr>`;
+                        }
+                    });
+                    document.getElementById('modelo-tbody').addEventListener('click', function(e) {
+                        if (e.target.closest('.editar-btn')) {
+                            const btn = e.target.closest('.editar-btn');
+                            const rowData = JSON.parse(btn.getAttribute('data-row').replace(/&apos;/g, "'"));
+                            abrirModal('editar', rowData, currentEndpoint, modal, modalTitle, modalFormContent, API_BASE_URL);
+                        }
+                        if (e.target.closest('.eliminar-btn')) {
+                            const btn = e.target.closest('.eliminar-btn');
+                            const rowData = JSON.parse(btn.getAttribute('data-row').replace(/&apos;/g, "'"));
+                            eliminarRegistro(rowData); // <--- Esto llama al modal y activa los botones
+                        }
+                    });
+                });
+        }
+        // Exponer funciones globales
+        window.eliminarRegistro = function(rowData) {
+            const modalConfirm = document.getElementById('modal-confirm');
+            modalConfirm.style.display = 'flex';
+
+            // Limpiar listeners previos
+            const acceptBtn = document.getElementById('confirm-accept');
+            const cancelBtn = document.getElementById('confirm-cancel');
+            acceptBtn.onclick = null;
+            cancelBtn.onclick = null;
+            acceptBtn.onclick = async function() {
+                modalConfirm.style.display = 'none';
+
+                let url;
+                // Caso especial para v_pension_servicios
+                if (currentEndpoint === "v_pension_servicios") {
+                    url = `${API_BASE_URL}/${currentEndpoint}/${rowData.id_pension}/${rowData.id_servicio}`;
+                } else if (currentEndpoint === "v_habitacion_servicio") {
+                    url = `${API_BASE_URL}/${currentEndpoint}/${rowData.id_habitacion}/${rowData.id_servicio}`;
+                } else {
+                    let id = null;
+                    if (currentEndpoint === "v_reservas" && rowData.id_reserva) {
+                        id = rowData.id_reserva;
+                    } else if (currentEndpoint === "v_habitaciones" && rowData.id_habitacion) {
+                        id = rowData.id_habitacion;
+                    } else if (currentEndpoint === "v_pensiones" && rowData.id_pension) {
+                        id = rowData.id_pension;
+                    } else if (currentEndpoint === "v_resenas" && rowData.id_resena) {
+                        id = rowData.id_resena;
+                    } else if (currentEndpoint === "v_imagenes" && rowData.id_imagen) {
+                        id = rowData.id_imagen;
+                    } else if (currentEndpoint === "v_pagos" && rowData.id_pago) {
+                        id = rowData.id_pago;
+                    } else if (currentEndpoint === "v_usuarios" && rowData.id_usuario) {
+                        id = rowData.id_usuario;
+                    } else if (currentEndpoint === "v_ciudades" && rowData.id_ciudad) {
+                        id = rowData.id_ciudad;
+                    } else if (currentEndpoint === "Departamentos" && rowData.id_departamento) {
+                        id = rowData.id_departamento;
+                    } else if (currentEndpoint === "estados_pago" && rowData.id_estado_pago) {
+                        id = rowData.id_estado_pago;
+                    } else if (currentEndpoint === "metodos_pago" && rowData.id_metodo_pago) {
+                        id = rowData.id_metodo_pago;
+                    } else if (currentEndpoint === "servicios" && rowData.id_servicio) {
+                        id = rowData.id_servicio;
+                    } else {
+                        // fallback genérico
+                        id = rowData.id;
+                    }
+                    if (!id) {
+                        showToast('No se pudo determinar el ID para eliminar', "#c0392b");
+                        return;
+                    }
+                    url = `${API_BASE_URL}/${currentEndpoint}/${id}`;
+                }
+
+                try {
+                    const resp = await fetch(url, { method: 'DELETE' });
+                    if (resp.ok) {
+                        showToast('Registro eliminado correctamente', "#27ae60");
+                        location.reload(); // <-- Recarga la página
+                    } else {
+                        showToast('Error al eliminar', "#c0392b");
+                    }
+                } catch (e) {
+                    showToast('Error de conexión', "#c0392b");
+                }
+            };
+            cancelBtn.onclick = function() {
+                modalConfirm.style.display = 'none';
+            };
+        };
+
+        // Restaurar selección previa si existe
+        const tablaGuardada = localStorage.getItem('tablaSeleccionada');
+        if (tablaGuardada && [...tablaSelect.options].some(opt => opt.value === tablaGuardada)) {
+            tablaSelect.value = tablaGuardada;
+            currentEndpoint = tablaGuardada;
+        } else {
+            tablaSelect.value = tablas[0].endpoint;
+            currentEndpoint = tablas[0].endpoint;
+        }
+
+        cargarTablaGeneral();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gráfico de Barras por API</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="card">
+        <div class="card-title">Gráfico de Barras de Datos</div>
+        <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+    </div>
+    <script>
+        // Usa la URL de tu API
+        const apiUrl = 'https://myapi-pensiones.onrender.com/api/v_total_datos_barra';
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                const labels = data.map(item => item.accion);
+                const valores = data.map(item => item.total);
+
+                const ctx = document.getElementById('lineChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Acciones', 
+                            data: valores,
+                            borderColor: '#CDBA77',
+                            backgroundColor: '#CDBA77',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Mes' } },
+                            y: { title: { display: true, text: 'Valor' } }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error al obtener los datos:', error);
+            });
+    </script>
+</body>
+</html>
