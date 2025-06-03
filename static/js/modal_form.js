@@ -103,7 +103,6 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
             { key: 'id_pension', type: 'select', options: pensiones.map(p => ({ value: p.id_pension, label: p.nombre })), placeholder: "Seleccione una pensión" },
             { key: 'descripcion', type: 'text' },
             { key: 'capacidad', type: 'number' },
-            { key: 'precio', type: 'number', step: "0.01" },
             { key: 'estado_habitacion', type: 'select', options: [
                 { value: 1, label: "Disponible" },
                 { value: 0, label: "Ocupada" }
@@ -111,7 +110,7 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
         ],
         ciudad: [
             { key: 'id_ciudad', type: 'readonly', show: tipo === 'editar', label: 'ID Ciudad' },
-            { key: 'ciudad', type: 'text', label: 'Ciudad' },
+            { key: 'nombre', type: 'text', label: 'Ciudad' }, // <-- Cambia 'ciudad' por 'nombre'
             { key: 'id_departamento', type: 'select', label: 'Departamento', options: (departamentos || []).map(dep => ({ value: dep.id_departamento, label: dep.nombre })), placeholder: "Seleccione un departamento" }
         ],
         departamentos: [
@@ -282,7 +281,7 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
         }
         campos = {
             id_ciudad: rowData ? rowData.id_ciudad : '',
-            ciudad: rowData ? rowData.ciudad : '',
+            nombre: rowData ? rowData.nombre || rowData.ciudad : '', // <-- usa 'nombre'
             id_departamento: rowData ? rowData.id_departamento : ''
         };
     } else if (rowData) {
@@ -455,6 +454,14 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
             return;
         }
 
+        // Validación para ciudades
+        if (entidad === 'ciudad') {
+            if (!data.nombre || !data.id_departamento) {
+                showToast('Debes ingresar el nombre y seleccionar un departamento', "#c0392b");
+                return;
+            }
+        }
+
         if (!changed) {
             showToast('No hay cambios para guardar', "#f39c12");
             return;
@@ -485,7 +492,6 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
                 id_pension: data.id_pension,
                 descripcion: data.descripcion,
                 capacidad: data.capacidad,
-                precio: data.precio,
                 estado_habitacion: data.estado_habitacion
             };
             if (tipo === 'editar') {
@@ -505,12 +511,12 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
                 url += `/${data.id_imagen}`;
             }
             data = dataImagen;
-        } else if (currentEndpoint === "id_ciudades") {
+        } else if (currentEndpoint === "v_ciudades" || entidad === "ciudad") {
+            url = `${API_BASE_URL}/v_ciudades`;
             const dataCiudad = {
-                id_ciudad: data.id_ciudad,
-                ciudad: data.ciudad,
+                ciudad: data.nombre, // <-- Cambia 'nombre' por 'ciudad'
                 id_departamento: data.id_departamento
-            }; 
+            };
             if (tipo === 'editar') {
                 dataCiudad.id_ciudad = data.id_ciudad;
                 url += `/${data.id_ciudad}`;
@@ -553,7 +559,6 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
                 id_pension: data.id_pension,
                 descripcion: data.descripcion,
                 capacidad: data.capacidad,
-                precio: data.precio,
                 estado_habitacion: data.estado_habitacion
             };
             if (tipo === 'editar') {
@@ -566,7 +571,6 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
                 id_pension: data.id_pension,
                 descripcion: data.descripcion,
                 capacidad: data.capacidad,
-                precio: data.precio,
                 estado_habitacion: data.estado_habitacion
             };
             if (tipo === 'editar') {
