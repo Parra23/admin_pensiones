@@ -121,6 +121,7 @@
                 "id_pension",
                 "nombre",
                 "descripcion",
+                'imagen_pension',
                 "direccion",
                 "ciudad",
                 "departamento",
@@ -247,7 +248,7 @@
                                     return `<td>${row[k]}</td>`;
                                 }
                                 // Traducción para rol de usuario
-                                if (currentEndpoint === "v_usuarios" && k === "rol") {
+                                if (currentEndpoint === "v_usuarnios" && k === "rol") {
                                     let rolTxt = "Usuario";
                                     if (row[k] === 1) rolTxt = "Administrador";
                                     else if (row[k] === 2) rolTxt = "Propietario";
