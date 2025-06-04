@@ -23,7 +23,6 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
     let servicios = [];
     let reservas = [];
     let metodosPago = [];
-    let estadosPago = [];
 
     // --- Carga los datos primero ---
     // Siempre cargar pensiones y servicios si el endpoint es pensiones_servicios
@@ -214,7 +213,9 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
         else if (campos.hasOwnProperty('id_metodo_pago')) entidad = 'metodos_pago';
     }
     if (entidad) {
-        for (const field of config[entidad]) {
+        // Ordena los campos por el key alfabéticamente
+        const camposOrdenados = [...config[entidad]].sort((a, b) => a.key.localeCompare(b.key));
+        for (const field of camposOrdenados) {
             if (field.show === false) continue;
             let value = campos[field.key] ?? '';
             let label = field.label || field.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -289,6 +290,48 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
             const data = await fetch(`${API_BASE_URL}/${currentEndpoint}`).then(r => r.json());
             if (Array.isArray(data) && data.length > 0) {
                 Object.keys(data[0]).forEach(key => campos[key] = '');
+            } else {
+                // Fuerza los campos vacíos para cada entidad conocida
+                if (currentEndpoint === "Departamentos") {
+                    campos.id_departamento = '';
+                    campos.nombre = '';
+                }else if (
+                    currentEndpoint === "habitacion" ||
+                    currentEndpoint === "habitaciones" ||
+                    currentEndpoint === "v_habitaciones"
+                ) {
+                    campos.id_habitacion = '';
+                    campos.id_pension = '';
+                    campos.descripcion = '';
+                    campos.capacidad = '';
+                    
+                    campos.estado_habitacion = '';
+                } else if (currentEndpoint === "servicios") {
+                    campos.id_servicio = '';
+                    campos.nombre = '';
+                } else if (currentEndpoint === "usuarios") {
+                    campos.id_usuario = '';
+                    campos.nombre = '';
+                    campos.apellido = '';
+                    campos.contrasenna = '';
+                    campos.email = '';
+                    campos.telefono = '';
+                    campos.rol = '';
+                    campos.estado_usuario = '';
+                } else if (currentEndpoint === "resena" || currentEndpoint === "resenas" || currentEndpoint === "v_resenas") {
+                    campos.id_resena = '';
+                    campos.id_pension = '';
+                    campos.id_usuario = '';
+                    campos.calificacion = '';
+                    campos.comentario = '';
+                } else if (currentEndpoint === "pagos") {
+                    campos.id_pago = '';
+                    campos.id_reserva = '';
+                    campos.monto = '';
+                    campos.id_metodo_pago = '';
+                    campos.pendiente = '';
+                }
+                // Agrega aquí más entidades según tu necesidad
             }
         } catch (e) {
             showToast('No se pudieron obtener los campos para el formulario', "#c0392b");
@@ -460,7 +503,9 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
         }
 
         let url = `${API_BASE_URL}/${currentEndpoint}`;
-        let method = tipo === 'editar' ? 'PUT' : 'POST';
+let method = tipo === 'editar' ? 'PUT' : 'POST';
+        // No cambies el endpoint, usa currentEndpoint tal cual para POST y PUT
+
 
         // --- BLOQUE DE RESERVAS DEBE IR AQUÍ ---
         if (entidad === 'reservas') {
@@ -477,9 +522,18 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
                 url += `/${data.id_reserva}`;
             }
             data = dataReserva;
-        }
-        // --- BLOQUE DE HABITACIÓN DEBE IR DESPUÉS ---
-        else if (entidad === 'habitacion') {
+        } else if (entidad === 'pagos') {
+            const dataPago = {
+                id_reserva: data.id_reserva,
+                monto: data.monto,
+                id_metodo_pago: data.id_metodo_pago
+            };
+            if (tipo === 'editar') {
+                dataPago.id_pago = data.id_pago;
+                url += `/${data.id_pago}`;
+            }
+            data = dataPago;
+        } else if (entidad === 'habitacion') {
             const dataHabitacion = {
                 id_pension: data.id_pension,
                 descripcion: data.descripcion,
@@ -581,15 +635,13 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
             }
             data = dataPension;
         } else if (campos.hasOwnProperty('id_departamento')) {
-        const dataDepartamento = {
-            nombre: data.nombre
-        };
-        if (tipo === 'editar') {
-            dataDepartamento.id_departamento = data.id_departamento;
-            url += `/${data.id_departamento}`; // <-- Agrega el ID a la URL para PUT
-        }
-        data = dataDepartamento;
-    }else if (campos.hasOwnProperty('id_servicio')) {
+            const dataDepartamento = { nombre: data.nombre };
+            if (tipo === 'editar') {
+                dataDepartamento.id_departamento = data.id_departamento;
+                url += `/${data.id_departamento}`;
+            }
+            data = dataDepartamento;
+        }else if (campos.hasOwnProperty('id_servicio')) {
             const dataServicio = {
                 nombre: data.nombre
             };

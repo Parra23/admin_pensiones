@@ -65,7 +65,6 @@
         const tablas = [
             {nombre: "Ciudades", endpoint: "v_ciudades"},
             {nombre: "Departamentos", endpoint: "Departamentos"},
-            {nombre: "Estados pago", endpoint: "estados_pago"},
             {nombre: "Habitaciones", endpoint: "v_habitaciones"},
             {nombre: "Imagenes", endpoint: "v_imagenes"},
             {nombre: "Metodo de pago", endpoint: "metodos_pago"},
@@ -92,7 +91,6 @@
         const columnasVisibles = {
             v_ciudades: ["id_ciudad", "ciudad", "departamento"],
             Departamentos: ["id_departamento", "nombre"],
-            estados_pago: ["id_estado_pago", "nombre"],
             v_habitaciones: [
                 "id_habitacion",
                 "pension",
@@ -114,9 +112,7 @@
                 "id_pago",
                 "monto",
                 "fecha_pago",
-                "metodo_pago",
-                "estado_pago"
-            ],
+                "metodo_pago"],
             v_pensiones: [
                 "id_pension",
                 "nombre",
@@ -238,9 +234,7 @@
                                             else if (row[k] === 3) estadoTxt = "Cancelada";
                                             return `<td>${estadoTxt}</td>`;
                                         }                                        if (k === "estado_habitacion") return `<td>${row[k] === 1 ? "Disponible" : "Ocupada"}</td>`;
-                                        if (k === "estado_pago") return `<td>${row[k] === 1 ? "Pagado" : "Pendiente"}</td>`;
                                         // Para id_estado_pago, solo muestra el valor:
-                                        if (k === "id_estado_pago") return `<td>${row[k]}</td>`;
                                         // Por defecto para otros estados
                                         return `<td>${row[k] === 1 ? "Activo" : "Inactivo"}</td>`;
                                     }
@@ -321,8 +315,6 @@
                         id = rowData.id_ciudad;
                     } else if (currentEndpoint === "Departamentos" && rowData.id_departamento) {
                         id = rowData.id_departamento;
-                    } else if (currentEndpoint === "estados_pago" && rowData.id_estado_pago) {
-                        id = rowData.id_estado_pago;
                     } else if (currentEndpoint === "metodos_pago" && rowData.id_metodo_pago) {
                         id = rowData.id_metodo_pago;
                     } else if (currentEndpoint === "servicios" && rowData.id_servicio) {

@@ -12,7 +12,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('login'), name='root'),
     path('home/', views.home, name='home'),
-    path('login/', login_view, name='login'),
+    path('login/', views.login_view, name='login'),
     path('register/', register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('tablas/', views.tabla_general_view, name='tabla_general'),

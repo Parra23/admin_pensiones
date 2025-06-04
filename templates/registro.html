@@ -8,22 +8,31 @@
 </head>
 <body>
 <div class="form-container">
+    {% if messages %}
+      <ul style="margin-bottom:1em;">
+        {% for message in messages %}
+          <li style="color: {% if message.tags == 'error' %}#A32232{% else %}#27ae60{% endif %}; font-weight:600;">
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <form class="simple-form" autocomplete="on" method="post">
         {% csrf_token %}
         <h1 class="title">NUEVA CUENTA</h1>
         <div class="form-row" style="display: flex; gap: 1em;">
             <div class="form-group" style="flex:1;">
                 <label for="firstname">Nombre</label>
-                <input required type="text" placeholder="Nombre" name="firstname" id="firstname" autocomplete="given-name">
+                <input required type="text" placeholder="Nombre" name="firstname" id="firstname" autocomplete="given-name" value="{{ request.POST.firstname }}">
             </div>
             <div class="form-group" style="flex:1;">
                 <label for="lastname">Apellido</label>
-                <input required type="text" placeholder="Apellido" name="lastname" id="lastname" autocomplete="family-name">
+                <input required type="text" placeholder="Apellido" name="lastname" id="lastname" autocomplete="family-name" value="{{ request.POST.lastname }}">
             </div>
         </div>
         <div class="form-group">
             <label for="email">Correo</label>
-            <input required type="email" placeholder="ejemplo@correo.com" name="email" id="email" autocomplete="email">
+            <input required type="email" placeholder="ejemplo@correo.com" name="email" id="email" autocomplete="email" value="{{ request.POST.email }}">
         </div>
         <div class="form-group">
             <label for="password">Contraseña</label>
