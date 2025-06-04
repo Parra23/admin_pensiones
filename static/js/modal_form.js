@@ -47,8 +47,8 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
         } catch {}
     }
     if (
-        Object.keys(campos).includes('id_habitacion') && API_BASE_URL
-        || (campos.hasOwnProperty('id_reserva') && API_BASE_URL) // <-- Agrega esta línea
+        currentEndpoint === "habitaciones_servicios" ||
+        Object.keys(campos).includes('id_habitacion')
     ) {
         try {
             const resp = await fetch(`${API_BASE_URL}/v_habitaciones`);
@@ -81,13 +81,6 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
             metodosPago = await resp.json();
         } catch {}
     }
-    // Cargar estados de pago si el formulario es de pagos
-    if (Object.keys(campos).includes('id_estado_pago') && API_BASE_URL) {
-        try {
-            const resp = await fetch(`${API_BASE_URL}/estados_pago`);
-            estadosPago = await resp.json();
-        } catch {}
-    }
 
     // --- Ahora define config ---
     const config = {
@@ -103,6 +96,7 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
             { key: 'id_pension', type: 'select', options: pensiones.map(p => ({ value: p.id_pension, label: p.nombre })), placeholder: "Seleccione una pensión" },
             { key: 'descripcion', type: 'text' },
             { key: 'capacidad', type: 'number' },
+            { key: 'sobreocupacion', type: 'text', label: 'Sobreocupación', readonly: true, show: true }, // <-- Añade esto
             { key: 'estado_habitacion', type: 'select', options: [
                 { value: 1, label: "Disponible" },
                 { value: 0, label: "Ocupada" }
@@ -148,7 +142,7 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
         ],
         habitaciones_servicios: [
             // Solo para insertar: habitación y servicio como select
-            { key: 'id_habitacion', type: 'select', label: 'Habitación', options: habitaciones.map(h => ({ value: h.id_habitacion, label: h.descripcion })), placeholder: "Seleccione una habitación" },
+            { key: 'id_habitacion', type: 'select', label: 'Habitación', options: habitaciones.map(h => ({ value: h.id_habitacion, label: `[${h.id_habitacion}] ${h.descripcion}` })), placeholder: "Seleccione una habitación" },
             { key: 'id_servicio', type: 'select', label: 'Servicio', options: servicios.map(s => ({ value: s.id_servicio, label: s.nombre })), placeholder: "Seleccione un servicio" }
         ],
         reservas: [
@@ -165,10 +159,7 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
             ]},
             { key: 'total', type: 'number', step: "0.01", label: 'Total' }
         ],
-        estados_pago: [
-            { key: 'id_estado_pago', type: 'readonly', show: tipo === 'editar', label: 'ID Estado de Pago' },
-            { key: 'nombre', type: 'text', label: 'Nombre del Estado de Pago' }
-        ],
+        
         usuarios: [
             { key: 'id_usuario', type: 'readonly', show: tipo === 'editar', label: 'ID Usuario' },
             { key: 'nombre', type: 'text', label: 'Nombre' },
@@ -194,7 +185,7 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
             { key: 'id_reserva', type: 'select', label: 'Reserva', options: reservas.map(r => ({ value: r.id_reserva, label: `[${r.id_reserva}] ${r.usuario} - ${r.pension}` })), placeholder: "Seleccione una reserva" },
             { key: 'monto', type: 'number', step: "0.01", label: 'Monto' },
             { key: 'id_metodo_pago', type: 'select', label: 'Método de Pago', options: metodosPago.map(m => ({ value: m.id_metodo_pago, label: m.nombre })), placeholder: "Seleccione un método de pago" },
-            { key: 'id_estado_pago', type: 'select', label: 'Estado de Pago', options: estadosPago.map(e => ({ value: e.id_estado_pago, label: e.nombre })), placeholder: "Seleccione un estado de pago" }
+            { key: 'pendiente', type: 'text', label: 'Pendiente', readonly: true, show: tipo === 'insertar' || (tipo === 'editar') }       
         ]
     };
 
@@ -219,7 +210,6 @@ async function getFormHtml(campos, departamentos = null, tipo = 'insertar', API_
         else if (campos.hasOwnProperty('id_ciudad')) entidad = 'ciudad';
         else if (campos.hasOwnProperty('id_departamento')) entidad = 'departamentos';
         else if (campos.hasOwnProperty('id_servicio')) entidad = 'servicios';
-        else if (campos.hasOwnProperty('id_estado_pago')) entidad = 'estados_pago';
         else if (campos.hasOwnProperty('id_usuario')) entidad = 'usuarios';
         else if (campos.hasOwnProperty('id_metodo_pago')) entidad = 'metodos_pago';
     }
@@ -418,6 +408,8 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
 }
     // --- Fin del bloque para la entidad 'imagen' ---
 
+    // --- Fin del bloque para la entidad 'habitaciones_servicios' ---
+
     form.onsubmit = async function(e) {
         e.preventDefault();
         const formData = new FormData(form);
@@ -522,12 +514,6 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
                 url += `/${data.id_ciudad}`;
             }
             data = dataCiudad;
-        } else if (currentEndpoint === "estados_pago" && tipo === 'editar') {
-            data = {
-                id_estado_pago: data.id_estado_pago,
-                nombre: data.nombre
-            };
-            url += `/${data.id_estado_pago}`;
         } else if (campos.hasOwnProperty('id_resena')) {
             const dataResena = {
                 id_pension: data.id_pension,
@@ -660,7 +646,6 @@ async function abrirModal(tipo, rowData, currentEndpoint, modal, modalTitle, mod
             id_reserva: data.id_reserva,
             monto: data.monto,
             id_metodo_pago: data.id_metodo_pago,
-            id_estado_pago: data.id_estado_pago
         };
         if (tipo === 'editar') {
             dataPago.id_pago = data.id_pago;
